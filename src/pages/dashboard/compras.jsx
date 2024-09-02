@@ -403,8 +403,8 @@ import {
   
         {/* Modal para capturar motivo de anulación */}
         {cancelOpen && (
-  <div className="fixed inset-0 flex items-center justify-center z-50">
-    <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+  <div className="fixed inset-0 flex items-center justify-center z-50 bg-gray-800 bg-opacity-70">
+    <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
       <Typography variant="h6" className="font-semibold mb-4">
         Motivo de Anulación
       </Typography>
@@ -437,6 +437,7 @@ import {
     </div>
   </div>
 )}
+
 
       </>
     );

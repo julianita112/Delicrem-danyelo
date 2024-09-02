@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Button,
   Input,
@@ -16,13 +16,19 @@ export function CrearCompra({ handleClose, fetchCompras, proveedores, insumos })
     id_proveedor: "",
     fecha_compra: "",
     fecha_registro: "",
-    numero_recibo: "", // Nuevo campo para el número de recibo
+    numero_recibo: "",
     estado: "Completado",
     detalleCompras: [],
     total: 0,
     subtotal: 0,
   });
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    // Establece la fecha actual en el campo de fecha de registro al montar el componente
+    const today = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
+    setSelectedCompra(prev => ({ ...prev, fecha_registro: today }));
+  }, []);
 
   const Toast = Swal.mixin({
     toast: true,
@@ -49,7 +55,7 @@ export function CrearCompra({ handleClose, fetchCompras, proveedores, insumos })
       newErrors.fecha_registro = "La fecha de registro es obligatoria";
     }
     if (!selectedCompra.numero_recibo) {
-      newErrors.numero_recibo = "El número de recibo es obligatorio"; // Validación del nuevo campo
+      newErrors.numero_recibo = "El número de recibo es obligatorio";
     }
     if (selectedCompra.detalleCompras.length === 0) {
       newErrors.detalleCompras = "Debe agregar al menos un detalle de compra";
@@ -95,7 +101,7 @@ export function CrearCompra({ handleClose, fetchCompras, proveedores, insumos })
       id_proveedor: parseInt(selectedCompra.id_proveedor),
       fecha_compra: selectedCompra.fecha_compra,
       fecha_registro: selectedCompra.fecha_registro,
-      numero_recibo: selectedCompra.numero_recibo, // Guardar el número de recibo
+      numero_recibo: selectedCompra.numero_recibo,
       estado: selectedCompra.estado,
       total: selectedCompra.total,
       detalleCompras: selectedCompra.detalleCompras.map((detalle) => ({
@@ -176,74 +182,81 @@ export function CrearCompra({ handleClose, fetchCompras, proveedores, insumos })
   };
 
   return (
-    <div className="flex-1 flex flex-col gap-4">
-      <div className="w-[200px]">
-        <Select
-          label="Proveedor"
-          name="id_proveedor"
-          value={selectedCompra.id_proveedor}
-          onChange={(e) => {
-            setSelectedCompra({ ...selectedCompra, id_proveedor: e });
-            setErrors({ ...errors, id_proveedor: "" });
-          }}
-          className={`w-full ${errors.id_proveedor ? "border-red-500" : ""}`}
-          required
-        >
-          {proveedores
-            .filter((proveedor) => proveedor.activo)
-            .map((proveedor) => (
-              <Option key={proveedor.id_proveedor} value={proveedor.id_proveedor}>
-                {proveedor.nombre}
-              </Option>
-            ))}
-        </Select>
-        {errors.id_proveedor && <p className="text-red-500 text-xs mt-1">{errors.id_proveedor}</p>}
+    <div className="flex-1 flex flex-col gap-6 p-6 bg-white shadow-lg rounded-lg">
+      <Typography variant="h5" color="blue-gray" className="mb-4">
+        Crear Compra
+      </Typography>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div>
+          <Select
+            label="Proveedor"
+            name="id_proveedor"
+            value={selectedCompra.id_proveedor}
+            onChange={(e) => {
+              setSelectedCompra({ ...selectedCompra, id_proveedor: e });
+              setErrors({ ...errors, id_proveedor: "" });
+            }}
+            className={`w-full ${errors.id_proveedor ? "border-red-500" : ""}`}
+            required
+          >
+            {proveedores
+              .filter((proveedor) => proveedor.activo)
+              .map((proveedor) => (
+                <Option key={proveedor.id_proveedor} value={proveedor.id_proveedor}>
+                  {proveedor.nombre}
+                </Option>
+              ))}
+          </Select>
+          {errors.id_proveedor && <p className="text-red-500 text-sm mt-1">{errors.id_proveedor}</p>}
+        </div>
+        <div>
+          <Input
+            label="Fecha de Compra"
+            name="fecha_compra"
+            type="date"
+            value={selectedCompra.fecha_compra}
+            onChange={handleChange}
+            className={`w-full ${errors.fecha_compra ? "border-red-500" : ""}`}
+            required
+          />
+          {errors.fecha_compra && <p className="text-red-500 text-sm mt-1">{errors.fecha_compra}</p>}
+        </div>
+        <div>
+          <Input
+            label="Fecha de Registro"
+            name="fecha_registro"
+            type="date"
+            value={selectedCompra.fecha_registro}
+            readOnly
+            className={`w-full bg-gray-100 ${errors.fecha_registro ? "border-red-500" : ""}`}
+            required
+          />
+          {errors.fecha_registro && <p className="text-red-500 text-sm mt-1">{errors.fecha_registro}</p>}
+        </div>
+        <div>
+          <Input
+            label="Número de Recibo"
+            name="numero_recibo"
+            type="text"
+            value={selectedCompra.numero_recibo}
+            onChange={handleChange}
+            className={`w-full ${errors.numero_recibo ? "border-red-500" : ""}`}
+            required
+          />
+          {errors.numero_recibo && <p className="text-red-500 text-sm mt-1">{errors.numero_recibo}</p>}
+        </div>
       </div>
-      <div className="w-[200px]">
-        <Input
-          label="Fecha de Compra"
-          name="fecha_compra"
-          type="date"
-          value={selectedCompra.fecha_compra}
-          onChange={handleChange}
-          className={`w-full ${errors.fecha_compra ? "border-red-500" : ""}`}
-          required
-        />
-        {errors.fecha_compra && <p className="text-red-500 text-xs mt-1">{errors.fecha_compra}</p>}
-      </div>
-      <div className="w-[200px]">
-        <Input
-          label="Fecha de Registro"
-          name="fecha_registro"
-          type="date"
-          value={selectedCompra.fecha_registro}
-          onChange={handleChange}
-          className={`w-full ${errors.fecha_registro ? "border-red-500" : ""}`}
-          required
-        />
-        {errors.fecha_registro && <p className="text-red-500 text-xs mt-1">{errors.fecha_registro}</p>}
-      </div>
-      <div className="w-[200px]">
-        <Input
-          label="Número de Recibo"
-          name="numero_recibo"
-          type="text"
-          value={selectedCompra.numero_recibo}
-          onChange={handleChange}
-          className={`w-full ${errors.numero_recibo ? "border-red-500" : ""}`}
-          required
-        />
-        {errors.numero_recibo && <p className="text-red-500 text-xs mt-1">{errors.numero_recibo}</p>}
-      </div>
-      <Typography variant="h6" color="blue-gray" className="mt-1">
+
+      <Typography variant="h6" color="blue-gray" className="mb-4 text-lg font-semibold">
         Insumos a comprar
       </Typography>
 
-      <div className="bg-gray-100 p-4 rounded-lg shadow-lg flex-2 overflow-y-auto max-h-[800px]">
-        {selectedCompra.detalleCompras.map((detalle, index) => (
-          <div key={index} className="mb-4 flex items-center">
-            <div className="flex-1 flex flex-col gap-4 mb-2">
-              <div className="w-[200px]">
+      <div className="bg-white p-4 rounded-lg shadow-md max-h-80 overflow-y-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {selectedCompra.detalleCompras.map((detalle, index) => (
+            <div key={index} className="bg-gray-50 p-4 rounded-lg shadow-md flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
                 <Select
                   label="Insumo"
                   name="id_insumo"
@@ -252,7 +265,7 @@ export function CrearCompra({ handleClose, fetchCompras, proveedores, insumos })
                     handleDetalleChange(index, { target: { name: "id_insumo", value: e } });
                     setErrors({ ...errors, [`insumo_${index}`]: "" });
                   }}
-                  className="w-full text-xs"
+                  className={`w-full ${errors[`insumo_${index}`] ? "border-red-500" : ""}`}
                 >
                   {insumos
                     .filter((insumo) => insumo.activo)
@@ -262,11 +275,9 @@ export function CrearCompra({ handleClose, fetchCompras, proveedores, insumos })
                       </Option>
                     ))}
                 </Select>
-                {errors[`insumo_${index}`] && (
-                  <p className="text-red-500 text-xs mt-1">{errors[`insumo_${index}`]}</p>
-                )}
+                {errors[`insumo_${index}`] && <p className="text-red-500 text-sm">{errors[`insumo_${index}`]}</p>}
               </div>
-              <div className="w-[200px]">
+              <div className="flex flex-col gap-2">
                 <Input
                   label="Cantidad"
                   name="cantidad"
@@ -277,13 +288,11 @@ export function CrearCompra({ handleClose, fetchCompras, proveedores, insumos })
                     handleDetalleChange(index, e);
                     setErrors({ ...errors, [`cantidad_${index}`]: "" });
                   }}
-                  className="w-full text-xs"
+                  className={`w-full ${errors[`cantidad_${index}`] ? "border-red-500" : ""}`}
                 />
-                {errors[`cantidad_${index}`] && (
-                  <p className="text-red-500 text-xs mt-1">{errors[`cantidad_${index}`]}</p>
-                )}
+                {errors[`cantidad_${index}`] && <p className="text-red-500 text-sm">{errors[`cantidad_${index}`]}</p>}
               </div>
-              <div className="w-[200px]">
+              <div className="flex flex-col gap-2">
                 <Input
                   label="Precio Unitario"
                   name="precio_unitario"
@@ -295,56 +304,67 @@ export function CrearCompra({ handleClose, fetchCompras, proveedores, insumos })
                     handleDetalleChange(index, e);
                     setErrors({ ...errors, [`precio_unitario_${index}`]: "" });
                   }}
-                  className="w-full text-xs"
+                  className={`w-full ${errors[`precio_unitario_${index}`] ? "border-red-500" : ""}`}
                 />
-                {errors[`precio_unitario_${index}`] && (
-                  <p className="text-red-500 text-xs mt-1">{errors[`precio_unitario_${index}`]}</p>
-                )}
+                {errors[`precio_unitario_${index}`] && <p className="text-red-500 text-sm">{errors[`precio_unitario_${index}`]}</p>}
               </div>
-              <div className="w-[200px]">
+              <div className="flex flex-col gap-2">
                 <Input
                   label="Subtotal"
                   name="subtotal"
                   type="text"
                   value={`$${(detalle.subtotal || 0).toFixed(2)}`}
                   readOnly
-                  className="w-full text-xs bg-gray-100"
+                  className="w-full bg-gray-100"
                 />
               </div>
-            </div>
-            <div className="flex items-center ml-2">
               <IconButton
                 color="red"
                 onClick={() => handleRemoveDetalle(index)}
-                className="btncancelarm"
                 size="sm"
+                className="self-start"
               >
-                <TrashIcon className="h-4 w-4" />
+                <TrashIcon className="h-5 w-5" />
               </IconButton>
             </div>
-          </div>
-        ))}
-        <div className="mt-2">
-          <Button className="btnmas" size="xs" onClick={handleAddDetalle}>
-            <PlusIcon className="h-4 w-4 mr-0" />
-          </Button>
+          ))}
         </div>
-      </div>
 
-      <div className="w-full mt-4">
-        <Typography variant="h6" color="blue-gray">
-          Total de la Compra: ${(selectedCompra.total || 0).toFixed(2)}
-        </Typography>
-      </div>
-
-      <div className="mt-4">
-        <Button variant="text" className="btncancelarm" size="sm" onClick={handleClose}>
-          Cancelar
-        </Button>
-        <Button variant="gradient" className="btnagregarm" size="sm" onClick={handleSave}>
-          Crear Compra
+        <Button
+          size="sm"
+          onClick={handleAddDetalle}
+          className="flex items-center gap-2 bg-black text-white hover:bg-pink-800 px-2 py-1 rounded-md mt-4"
+        >
+          <PlusIcon className="h-5 w-5" />
+          <span className="sr-only">Agregar Detalle</span>
         </Button>
       </div>
+
+      <Typography variant="h6" color="blue-gray" className="mt-4 mb-2 text-lg font-semibold">
+        Total de la Compra: ${(selectedCompra.total || 0).toFixed(2)}
+      </Typography>
+
+      <div className="flex gap-2 mt-4 justify-end">
+  <Button
+    variant="text"
+    color="gray"
+    className="btncancelarm text-white"
+    size="sm"
+    onClick={handleClose}
+  >
+    Cancelar
+  </Button>
+  <Button
+    variant="gradient"
+    color="blue"
+    className="btnagregarm text-white"
+    size="sm"
+    onClick={handleSave}
+  >
+    Crear Compra
+  </Button>
+</div>
+
     </div>
   );
 }
