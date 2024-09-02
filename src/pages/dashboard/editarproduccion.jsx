@@ -17,26 +17,50 @@ export function EditarProduccion({ open, handleEditProductionOpen, orden }) {
   const [ventas, setVentas] = useState([]);
   const [selectedVentas, setSelectedVentas] = useState([]);
   const [productionDetails, setProductionDetails] = useState([]);
+  const [ventasAsociadas, setVentasAsociadas] = useState([]);
+  const [ventasAsociadasActuales, setVentasAsociadasActuales] = useState([]);
+  const [dataLoaded, setDataLoaded] = useState(false); // Estado para manejar la carga de datos
+  const [ventasFiltradas, setVentasFiltradas] = useState([]); // Estado para ventas filtradas
 
   useEffect(() => {
     if (open) {
-      Promise.all([fetchVentas()])
-        .then(() => {
-          loadOrderDetails();
-        })
-        .catch((error) => {
-          console.error("Error fetching data:", error);
-        });
+      setSelectedVentas([]);
+      setProductionDetails([]);
+      setDataLoaded(false);
+      fetchVentas();
     }
   }, [open]);
+
+  useEffect(() => {
+    if (ventas.length > 0 && !dataLoaded) {
+      fetchVentasAsociadas().then(() => {
+        loadOrderDetails();
+      });
+    }
+  }, [ventas, dataLoaded]);
+
+  useEffect(() => {
+    if (dataLoaded) {
+      aplicarFiltradoDeVentas();
+    }
+  }, [dataLoaded, ventas, ventasAsociadas, ventasAsociadasActuales]);
 
   const fetchVentas = async () => {
     try {
       const response = await axios.get("http://localhost:3000/api/ventas");
       setVentas(response.data);
-      console.log("Ventas fetched:", response.data);
     } catch (error) {
       console.error("Error fetching ventas:", error);
+    }
+  };
+
+  const fetchVentasAsociadas = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/api/ordenesproduccion/todas_ventas_asociadas");
+      const ventasAsociadas = response.data.map(venta => venta.numero_venta);
+      setVentasAsociadas(ventasAsociadas);
+    } catch (error) {
+      console.error("Error fetching ventas asociadas:", error);
     }
   };
 
@@ -45,6 +69,7 @@ export function EditarProduccion({ open, handleEditProductionOpen, orden }) {
       const response = await axios.get(`http://localhost:3000/api/ordenesproduccion/${orden.id_orden}/ventas_asociadas`);
       const ventasAsociadas = response.data.map(venta => venta.numero_venta);
       setSelectedVentas(ventasAsociadas);
+      setVentasAsociadasActuales(ventasAsociadas);
 
       const detallesProduccion = ventasAsociadas.flatMap(numero_venta => {
         const venta = ventas.find(v => v.numero_venta === numero_venta);
@@ -59,10 +84,17 @@ export function EditarProduccion({ open, handleEditProductionOpen, orden }) {
       });
 
       setProductionDetails(detallesProduccion);
-      console.log("Order details loaded:", detallesProduccion);
+      setDataLoaded(true); // Marcar los datos como cargados
     } catch (error) {
       console.error("Error loading order details:", error);
     }
+  };
+
+  const aplicarFiltradoDeVentas = () => {
+    const filtradas = ventas.filter(venta =>
+      !ventasAsociadas.includes(venta.numero_venta) || ventasAsociadasActuales.includes(venta.numero_venta)
+    );
+    setVentasFiltradas(filtradas); // Aplicar el filtrado de ventas
   };
 
   const handleVentaChange = (numero_venta, isChecked) => {
@@ -101,7 +133,6 @@ export function EditarProduccion({ open, handleEditProductionOpen, orden }) {
     });
 
     setProductionDetails(nuevosDetalles);
-    console.log("Productos agregados:", nuevosDetalles);
   };
 
   const quitarProductos = (productos) => {
@@ -121,7 +152,6 @@ export function EditarProduccion({ open, handleEditProductionOpen, orden }) {
     });
 
     setProductionDetails(nuevosDetalles);
-    console.log("Productos quitados:", nuevosDetalles);
   };
 
   const handleUpdateProductionSave = async () => {
@@ -176,7 +206,7 @@ export function EditarProduccion({ open, handleEditProductionOpen, orden }) {
           <Typography variant="h6" color="blue-gray" className="mb-4 text-sm">
             Seleccionar Ventas para la Orden
           </Typography>
-          {ventas.map(venta => (
+          {ventasFiltradas.map(venta => (
             <div key={venta.numero_venta} className="mb-4">
               <Checkbox
                 id={`venta-${venta.numero_venta}`}

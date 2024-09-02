@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Button,
   Input,
@@ -9,40 +9,32 @@ import {
 } from "@material-tailwind/react";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import axios from "../../utils/axiosConfig";
-import Swal from 'sweetalert2';
+import Swal from "sweetalert2";
 
-export function CrearPedido({ clientes, productos, fetchPedidos, onCancel }) {
-  const generateUniqueOrderNumber = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let orderNumber = '';
-    for (let i = 0; i < 10; i++) {
-      orderNumber += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return orderNumber;
-  };
-
-  const [selectedPedido, setSelectedPedido] = useState({
+export function CrearVenta({ clientes, productos, pedidos, fetchVentas, onCancel }) {
+  const [selectedVenta, setSelectedVenta] = useState({
     id_cliente: "",
-    numero_pedido: generateUniqueOrderNumber(),
+    numero_venta: "",
+    fecha_venta: "",
     fecha_entrega: "",
-    fecha_pago: "",
-    estado: "Esperando Pago",
-    pagado: false,
-    detallesPedido: [],
-    clientesh: { nombre: "", contacto: "" },
-    total: 0 // Agregar total al estado
+    estado: "Pendiente de Preparación",
+    pagado: true,
+    detalleVentas: [],
+    cliente: { nombre: "", contacto: "" },
+    total: 0, // Inicializar total
+    subtotal: 0 // Inicializar subtotal
   });
 
   const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setSelectedPedido({ ...selectedPedido, [name]: value });
+    setSelectedVenta({ ...selectedVenta, [name]: value });
   };
 
   const handleDetalleChange = (index, e) => {
     const { name, value } = e.target;
-    const detalles = [...selectedPedido.detallesPedido];
+    const detalles = [...selectedVenta.detalleVentas];
 
     if (name === 'id_producto') {
       const productoSeleccionado = productos.find(p => p.id_producto === parseInt(value));
@@ -57,56 +49,66 @@ export function CrearPedido({ clientes, productos, fetchPedidos, onCancel }) {
       detalles[index].subtotal = cantidad * precioUnitario;
     }
 
-    setSelectedPedido({ ...selectedPedido, detallesPedido: detalles });
+    setSelectedVenta({ ...selectedVenta, detalleVentas: detalles });
     updateTotal(detalles);
   };
 
   const handleAddDetalle = () => {
-    setSelectedPedido({
-      ...selectedPedido,
-      detallesPedido: [...selectedPedido.detallesPedido, { id_producto: "", cantidad: "", precio_unitario: "", subtotal: 0 }]
+    setSelectedVenta({
+      ...selectedVenta,
+      detalleVentas: [...selectedVenta.detalleVentas, { id_producto: "", cantidad: "", precio_unitario: "", subtotal: 0 }]
     });
   };
 
   const handleRemoveDetalle = (index) => {
-    const detalles = [...selectedPedido.detallesPedido];
+    const detalles = [...selectedVenta.detalleVentas];
     detalles.splice(index, 1);
-    setSelectedPedido({ ...selectedPedido, detallesPedido: detalles });
+    setSelectedVenta({ ...selectedVenta, detalleVentas: detalles });
     updateTotal(detalles);
   };
 
   const updateTotal = (detalles) => {
     const total = detalles.reduce((acc, detalle) => acc + (detalle.subtotal || 0), 0);
-    setSelectedPedido(prevState => ({
+    setSelectedVenta(prevState => ({
       ...prevState,
       total
     }));
   };
 
-  const handlePagadoChange = (e) => {
-    const isChecked = e.target.checked;
-    const newEstado = isChecked ? "Pendiente de Preparación" : "Esperando Pago";
-    setSelectedPedido({
-      ...selectedPedido,
-      pagado: isChecked,
-      fecha_pago: isChecked ? selectedPedido.fecha_pago : "",
-      estado: newEstado
-    });
+  const handlePedidoChange = (numero_pedido) => {
+    const pedido = pedidos.find(p => p.numero_pedido === numero_pedido);
+    if (pedido) {
+      const detalles = pedido.detallesPedido.map(detalle => ({
+        id_producto: detalle.id_producto,
+        cantidad: detalle.cantidad,
+        precio_unitario: parseFloat(productos.find(p => p.id_producto === detalle.id_producto)?.precio || 0),
+        subtotal: parseFloat(productos.find(p => p.id_producto === detalle.id_producto)?.precio || 0) * detalle.cantidad
+      }));
+      setSelectedVenta({
+        ...selectedVenta,
+        id_cliente: pedido.id_cliente,
+        numero_venta: pedido.numero_pedido,
+        fecha_venta: pedido.fecha_pago ? pedido.fecha_pago.split('T')[0] : "",
+        fecha_entrega: pedido.fecha_entrega ? pedido.fecha_entrega.split('T')[0] : "",
+        detalleVentas: detalles
+      });
+      updateTotal(detalles);
+    }
   };
 
   const handleSave = async () => {
     // Validaciones previas
     const newErrors = {};
-    if (!selectedPedido.id_cliente) {
+    if (!selectedVenta.id_cliente) {
       newErrors.id_cliente = "El cliente es obligatorio";
     }
-    if (!selectedPedido.fecha_entrega) {
-      newErrors.fecha_entrega = "La fecha de entrega es obligatoria";
+    if (!selectedVenta.fecha_venta) {
+      newErrors.fecha_venta = "La fecha de venta es obligatoria";
     }
-    if (selectedPedido.detallesPedido.length === 0) {
-      newErrors.detallesPedido = "Debe agregar al menos un detalle de pedido";
+    if (selectedVenta.detalleVentas.length === 0) {
+      newErrors.detalleVentas = "Debe agregar al menos un detalle de venta";
     }
-    selectedPedido.detallesPedido.forEach((detalle, index) => {
+    selectedVenta.detalleVentas.forEach((detalle, index) => {
       if (!detalle.id_producto) {
         newErrors[`producto_${index}`] = "El producto es obligatorio";
       }
@@ -118,64 +120,80 @@ export function CrearPedido({ clientes, productos, fetchPedidos, onCancel }) {
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       Swal.fire({
-        title: 'Error',
-        text: 'Por favor, complete todos los campos requeridos.',
-        icon: 'error',
+        title: "Error",
+        text: "Por favor, complete todos los campos requeridos.",
+        icon: "error",
       });
       return;
     }
 
-    const pedidoToSave = {
-      id_cliente: parseInt(selectedPedido.id_cliente),
-      numero_pedido: selectedPedido.numero_pedido,
-      fecha_entrega: new Date(selectedPedido.fecha_entrega).toISOString(),
-      fecha_pago: selectedPedido.pagado && selectedPedido.fecha_pago ? new Date(selectedPedido.fecha_pago).toISOString() : null,
-      estado: selectedPedido.pagado ? "Pendiente de Preparación" : "Esperando Pago",
-      pagado: selectedPedido.pagado,
-      detallesPedido: selectedPedido.detallesPedido.map(detalle => ({
+    const ventaToSave = {
+      id_cliente: parseInt(selectedVenta.id_cliente),
+      numero_venta: selectedVenta.numero_venta || `VENTA-${Date.now()}`, // Generar número de venta si no se selecciona pedido
+      fecha_venta: new Date(selectedVenta.fecha_venta).toISOString(),
+      fecha_entrega: new Date(selectedVenta.fecha_entrega).toISOString(),
+      estado: selectedVenta.estado,
+      pagado: selectedVenta.pagado,
+      detalleVentas: selectedVenta.detalleVentas.map((detalle) => ({
         id_producto: parseInt(detalle.id_producto),
         cantidad: parseInt(detalle.cantidad),
         precio_unitario: parseFloat(detalle.precio_unitario),
         subtotal: parseFloat(detalle.subtotal) // Incluyendo el subtotal
       })),
-      total: selectedPedido.total // Incluyendo el total
+      total: selectedVenta.total, // Incluyendo el total
+      subtotal: selectedVenta.subtotal // Incluyendo el subtotal
     };
 
     try {
-      await axios.post("http://localhost:3000/api/pedidos", pedidoToSave);
+      await axios.post("http://localhost:3000/api/ventas", ventaToSave);
       Swal.fire({
-        title: '¡Creación exitosa!',
-        text: 'El pedido ha sido creado correctamente.',
-        icon: 'success',
+        title: "¡Creación exitosa!",
+        text: "La venta ha sido creada correctamente.",
+        icon: "success",
       });
-      fetchPedidos(); // Actualizar la lista de pedidos
-      onCancel(); // Regresar a la lista de pedidos
+      fetchVentas(); // Actualizar la lista de ventas
+      onCancel(); // Regresar a la lista de ventas
     } catch (error) {
-      console.error("Error saving pedido:", error);
+      console.error("Error saving venta:", error);
       Swal.fire({
-        title: 'Error',
-        text: 'Hubo un problema al guardar el pedido.',
-        icon: 'error',
+        title: "Error",
+        text: "Hubo un problema al guardar la venta.",
+        icon: "error",
       });
     }
   };
 
   return (
     <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
-      <Typography className="text-black p-2 text-lg mb-4">Crear Pedido</Typography>
+      <Typography className="text-black p-2 text-lg mb-4">Crear Venta</Typography>
       <div className="flex flex-col gap-4">
+        <div className="w-full max-w-xs">
+          <Select
+            label="Número de Pedido"
+            name="numero_venta"
+            value={selectedVenta.numero_venta}
+            onChange={(e) => handlePedidoChange(e)}
+            className="w-full text-xs"
+          >
+            {pedidos.map(pedido => (
+              <Option key={pedido.numero_pedido} value={pedido.numero_pedido}>
+                {pedido.numero_pedido}
+              </Option>
+            ))}
+          </Select>
+        </div>
         <div className="w-full max-w-xs">
           <Select
             label="Cliente"
             name="id_cliente"
-            value={selectedPedido.id_cliente}
-            onChange={(e) => handleChange({ target: { name: 'id_cliente', value: e } })}
+            value={selectedVenta.id_cliente}
+            onChange={(e) => handleChange({ target: { name: "id_cliente", value: e } })}
             className="w-full text-xs"
             required
           >
             {clientes
-              .filter(cliente => cliente.activo)
-              .map(cliente => (
+              .filter((cliente) => cliente.activo)
+              .map((cliente) => (
                 <Option key={cliente.id_cliente} value={cliente.id_cliente}>
                   {`${cliente.nombre} - ${cliente.numero_documento}`} {/* Mostrar nombre y número de documento */}
                 </Option>
@@ -184,21 +202,10 @@ export function CrearPedido({ clientes, productos, fetchPedidos, onCancel }) {
         </div>
         <div className="w-full max-w-xs">
           <Input
-            label="Número de Pedido"
-            name="numero_pedido"
-            type="text"
-            value={selectedPedido.numero_pedido}
-            onChange={handleChange}
-            className="w-full text-xs"
-            disabled
-          />
-        </div>
-        <div className="w-full max-w-xs">
-          <Input
-            label="Fecha de Entrega"
-            name="fecha_entrega"
+            label="Fecha de Venta"
+            name="fecha_venta"
             type="date"
-            value={selectedPedido.fecha_entrega}
+            value={selectedVenta.fecha_venta}
             onChange={handleChange}
             className="w-full text-xs"
             required
@@ -206,32 +213,22 @@ export function CrearPedido({ clientes, productos, fetchPedidos, onCancel }) {
         </div>
         <div className="w-full max-w-xs">
           <Input
-            label="Fecha de Pago"
-            name="fecha_pago"
+            label="Fecha de Entrega"
+            name="fecha_entrega"
             type="date"
-            value={selectedPedido.fecha_pago ? selectedPedido.fecha_pago : ""}
+            value={selectedVenta.fecha_entrega}
             onChange={handleChange}
             className="w-full text-xs"
-            disabled={!selectedPedido.pagado}
+            required
           />
         </div>
 
-        <div className="flex items-center gap-1 text-xs">
-          <Typography className="text-gray-700">Pagado:</Typography>
-          <input
-            type="checkbox"
-            name="pagado"
-            checked={selectedPedido.pagado}
-            onChange={handlePagadoChange}
-            className="form-checkbox"
-          />
-        </div>
         <Typography variant="h6" color="black" className="text-ms">
           Agregar Productos
         </Typography>
 
         <div className="bg-gray-100 p-4 rounded-lg shadow-md flex flex-col gap-2">
-          {selectedPedido.detallesPedido.map((detalle, index) => (
+          {selectedVenta.detalleVentas.map((detalle, index) => (
             <div key={index} className="relative flex flex-col gap-2 mb-4">
               <div className="flex flex-col gap-2">
                 <Select
@@ -239,10 +236,10 @@ export function CrearPedido({ clientes, productos, fetchPedidos, onCancel }) {
                   required
                   name="id_producto"
                   value={detalle.id_producto}
-                  onChange={(e) => handleDetalleChange(index, { target: { name: 'id_producto', value: e } })}
+                  onChange={(e) => handleDetalleChange(index, { target: { name: "id_producto", value: e } })}
                   className="w-full"
                 >
-                  {productos.map(producto => (
+                  {productos.map((producto) => (
                     <Option key={producto.id_producto} value={producto.id_producto}>
                       {producto.nombre}
                     </Option>
@@ -264,7 +261,7 @@ export function CrearPedido({ clientes, productos, fetchPedidos, onCancel }) {
                   step="0.01"
                   value={detalle.precio_unitario}
                   className="w-full"
-                  readOnly // Usar readOnly en lugar de disabled
+                  readOnly
                 />
                 <Input
                   label="Subtotal"
@@ -297,27 +294,17 @@ export function CrearPedido({ clientes, productos, fetchPedidos, onCancel }) {
 
         <div className="flex justify-end mt-4">
           <Typography variant="h6" color="black">
-            Total: ${selectedPedido.total.toFixed(2)}
+            Total: ${selectedVenta.total.toFixed(2)}
           </Typography>
         </div>
       </div>
 
       <div className="flex justify-end gap-2 mt-4">
-        <Button
-          variant="text"
-          className="btncancelarm"
-          size="sm"
-          onClick={onCancel}
-        >
+        <Button variant="text" className="btncancelarm" size="sm" onClick={onCancel}>
           Cancelar
         </Button>
-        <Button
-          variant="gradient"
-          className="btnagregarm"
-          size="sm"
-          onClick={handleSave}
-        >
-          Crear Pedido
+        <Button variant="gradient" className="btnagregarm" size="sm" onClick={handleSave}>
+          Crear Venta
         </Button>
       </div>
     </div>

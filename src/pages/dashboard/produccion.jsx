@@ -15,7 +15,7 @@ import { PlusIcon, EyeIcon, CogIcon, ArrowDownTrayIcon } from "@heroicons/react/
 import axios from "../../utils/axiosConfig";
 import Swal from 'sweetalert2';
 import OrdenesProducidas from "./OrdenesProducidas";
-import OrdenesInactivas from "./OrdenesInactivas"; // Importar el nuevo componente de órdenes inactivas
+import OrdenesInactivas from "./OrdenesInactivas";
 import CrearProduccion from "./CrearProduccion";
 import EditarProduccion from "./EditarProduccion";
 import jsPDF from "jspdf";
@@ -42,7 +42,7 @@ export function OrdenesProduccion() {
   const [ordenesPerPage] = useState(5);
   const [search, setSearch] = useState("");
   const [showOrdenesProducidas, setShowOrdenesProducidas] = useState(false);
-  const [showOrdenesInactivas, setShowOrdenesInactivas] = useState(false); // Estado para mostrar órdenes inactivas
+  const [showOrdenesInactivas, setShowOrdenesInactivas] = useState(false);
   const [showCrearProduccion, setShowCrearProduccion] = useState(false);
   const [showEditarProduccion, setShowEditarProduccion] = useState(false);
 
@@ -122,10 +122,16 @@ export function OrdenesProduccion() {
 
   const toggleCrearProduccion = () => {
     setShowCrearProduccion(!showCrearProduccion);
+    if (showCrearProduccion) {
+      fetchOrdenes(); // Refresca las órdenes al cerrar el diálogo
+    }
   };
 
   const toggleEditarProduccion = () => {
     setShowEditarProduccion(!showEditarProduccion);
+    if (showEditarProduccion) {
+      fetchOrdenes(); // Refresca las órdenes al cerrar el diálogo
+    }
   };
 
   const handleDownloadDetails = (orden) => {
@@ -191,17 +197,13 @@ export function OrdenesProduccion() {
         ) : (
           <Card className="mx-3 -mt-16 mb-6 lg:mx-4 border border-blue-gray-100">
             <CardBody className="p-4">
-            <div className="flex items-center justify-between mb-6">
-            <input
-  type="text"
-  placeholder="Buscar por nombre de Proveedor..."
-  value={search}
-  onChange={handleSearchChange}
-  className="ml-[24rem] border border-gray-300 rounded-md focus:border-blue-500 appearance-none shadow-none py-2 px-4 text-sm" // Ajusta el padding vertical y horizontal
-  style={{ width: '250px' }} // Ajusta el ancho del campo de búsqueda
-/>
-</div>
-
+              <Input
+                type="text"
+                placeholder="Buscar por número de orden..."
+                value={search}
+                onChange={handleSearchChange}
+                className="mb-6"
+              />
               <div className="mb-1">
                 <Typography variant="h6" color="blue-gray" className="mb-4">
                   Lista de Órdenes de Producción

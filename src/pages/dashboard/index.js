@@ -26,4 +26,4 @@ export * from "@/pages/dashboard/editarpedido";
 export * from "@/pages/dashboard/crearpedido";
 export * from "@/pages/dashboard/ordenesinactivas";
 export * from "@/pages/dashboard/crearusuario";
-
+export * from "@/pages/dashboard/crearventa";

@@ -51,6 +51,35 @@ export function OrdenesInactivas() {
 
   const handleDetailsOpen = () => setDetailsOpen(!detailsOpen);
 
+  const handleActivateOrder = async (idOrden) => {
+    try {
+      await axios.patch(`http://localhost:3000/api/ordenesproduccion/${idOrden}/activo`, {
+        activo: true
+      });
+      Toast.fire({
+        icon: 'success',
+        title: '¡Orden activada exitosamente!'
+      });
+      fetchOrdenesInactivas(); // Refrescar la lista de órdenes inactivas
+    } catch (error) {
+      console.error("Error activando la orden:", error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Hubo un problema al intentar activar la orden.',
+        confirmButtonText: 'Aceptar',
+        background: '#ffff',
+        iconColor: '#A62A64',
+        confirmButtonColor: '#000000',
+        customClass: {
+          title: 'text-lg font-semibold',
+          icon: 'text-2xl',
+          confirmButton: 'px-4 py-2 text-white'
+        }
+      });
+    }
+  };
+
   return (
     <Card className="mx-3 -mt-16 mb-6 lg:mx-4 border border-blue-gray-100">
       <CardBody className="p-4">
@@ -113,6 +142,16 @@ export function OrdenesInactivas() {
                       >
                         <EyeIcon className="h-4 w-4" />
                       </IconButton>
+                      {orden.estado === "pendiente de producción" && (
+                        <Button
+                          className="btnactivar"
+                          size="sm"
+                          color="green"
+                          onClick={() => handleActivateOrder(orden.id_orden)}
+                        >
+                          Activar
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </tr>

@@ -21,6 +21,7 @@ import axios from "../../utils/axiosConfig";
 import Swal from "sweetalert2";
 import 'jspdf-autotable';
 import { Producir } from './Producir';
+import { CrearVenta } from './CrearVenta'; // Importar el componente CrearVenta
 
 // Configuración de Toast
 const Toast = Swal.mixin({
@@ -41,14 +42,17 @@ export function Ventas() {
   const [clientes, setClientes] = useState([]);
   const [productos, setProductos] = useState([]);
   const [pedidos, setPedidos] = useState([]);
-  const [open, setOpen] = useState(false);
+  const [showCrearVenta, setShowCrearVenta] = useState(false); // Estado para mostrar/ocultar formulario de crear venta
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false); // Estado para controlar el modal de anulación
+  const [motivoAnulacion, setMotivoAnulacion] = useState(''); // Estado para el motivo de anulación
+  const [ventaToCancel, setVentaToCancel] = useState(null); 
   const [productionOpen, setProductionOpen] = useState(false);
   const [selectedVenta, setSelectedVenta] = useState({
     id_cliente: "",
     numero_venta: "",
     fecha_venta: "",
-    fecha_entrega: "", // Agregado para manejar la fecha de entrega
+    fecha_entrega: "",
     estado: "Pendiente de Preparación",
     pagado: true,
     detalleVentas: [],
@@ -61,7 +65,6 @@ export function Ventas() {
   const [search, setSearch] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     fetchVentas();
@@ -128,158 +131,6 @@ export function Ventas() {
     setFilteredVentas(filtered);
   };
 
-  const handleOpen = () => setOpen(!open);
-  const handleDetailsOpen = () => setDetailsOpen(!detailsOpen);
-  const handleProductionOpen = () => setProductionOpen(!productionOpen);
-
-  const handleCreate = () => {
-    setSelectedVenta({
-      id_cliente: "",
-      numero_venta: "",
-      fecha_venta: "",
-      fecha_entrega: "", // Resetear al crear una nueva venta
-      estado: "Pendiente de Preparación",
-      pagado: true,
-      detalleVentas: [],
-      cliente: { nombre: "", contacto: "" },
-      total: 0,
-      subtotal: 0,
-    });
-    setErrors({});
-    handleOpen();
-  };
-
-  const generateNumeroVenta = () => {
-    // Genera un número de venta alfanumérico aleatorio
-    return 'VENTA-' + Math.random().toString(36).substr(2, 9).toUpperCase();
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!selectedVenta.id_cliente) {
-      newErrors.id_cliente = "El cliente es obligatorio";
-    }
-    if (!selectedVenta.fecha_venta) {
-      newErrors.fecha_venta = "La fecha de venta es obligatoria";
-    }
-    if (!selectedVenta.estado) {
-      newErrors.estado = "El estado es obligatorio";
-    }
-    if (selectedVenta.detalleVentas.length === 0) {
-      newErrors.detalleVentas = "Debe agregar al menos un detalle de venta";
-    }
-    selectedVenta.detalleVentas.forEach((detalle, index) => {
-      if (!detalle.id_producto) {
-        newErrors[`producto_${index}`] = "El producto es obligatorio";
-      }
-      if (!detalle.cantidad) {
-        newErrors[`cantidad_${index}`] = "La cantidad es obligatoria";
-      }
-      if (!detalle.precio_unitario) {
-        newErrors[`precio_${index}`] = "El precio unitario es obligatorio";
-      }
-    });
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return false;
-    }
-
-    return true;
-  };
-
-  const handleSave = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    // Verifica si se ha seleccionado un número de pedido
-    if (!selectedVenta.numero_venta) {
-      setSelectedVenta({ ...selectedVenta, numero_venta: generateNumeroVenta() });
-    }
-
-    const ventaToSave = {
-      id_cliente: parseInt(selectedVenta.id_cliente),
-      numero_venta: selectedVenta.numero_venta,
-      fecha_venta: selectedVenta.fecha_venta,
-      fecha_entrega: selectedVenta.fecha_entrega, // Incluir la fecha de entrega
-      estado: selectedVenta.estado,
-      pagado: selectedVenta.pagado,
-      total: selectedVenta.total,
-      detalleVentas: selectedVenta.detalleVentas.map((detalle) => ({
-        id_producto: parseInt(detalle.id_producto),
-        cantidad: parseInt(detalle.cantidad),
-        precio_unitario: parseFloat(detalle.precio_unitario),
-      })),
-    };
-
-    try {
-      await axios.post("http://localhost:3000/api/ventas", ventaToSave);
-      Swal.fire({
-        icon: "success",
-        title: "¡Creación exitosa!",
-        text: "La venta ha sido creada correctamente.",
-      });
-      fetchVentas();
-      handleOpen();
-    } catch (error) {
-      console.error("Error saving venta:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Hubo un problema al guardar la venta.",
-      });
-    }
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setSelectedVenta({ ...selectedVenta, [name]: value });
-    setErrors({ ...errors, [name]: "" });
-  };
-
-  const handleDetalleChange = (index, e) => {
-    const { name, value } = e.target;
-    const detalles = [...selectedVenta.detalleVentas];
-    if (name === 'id_producto') {
-      const productoSeleccionado = productos.find(p => p.id_producto === parseInt(value));
-      detalles[index]['precio_unitario'] = productoSeleccionado ? productoSeleccionado.precio : "";
-    }
-    detalles[index][name] = value;
-    setSelectedVenta({ ...selectedVenta, detalleVentas: detalles });
-    setErrors({ ...errors, [`${name}_${index}`]: "" });
-    updateTotal(detalles);
-  };
-
-  const handleAddDetalle = () => {
-    setSelectedVenta({
-      ...selectedVenta,
-      detalleVentas: [...selectedVenta.detalleVentas, { id_producto: "", cantidad: "", precio_unitario: "" }],
-    });
-  };
-
-  const handleRemoveDetalle = (index) => {
-    const detalles = [...selectedVenta.detalleVentas];
-    detalles.splice(index, 1);
-    setSelectedVenta({ ...selectedVenta, detalleVentas: detalles });
-    updateTotal(detalles);
-  };
-
-  const updateTotal = (detalles) => {
-    const subtotal = detalles.reduce((acc, detalle) => acc + (parseFloat(detalle.precio_unitario) || 0) * (parseInt(detalle.cantidad) || 0), 0);
-    const total = subtotal * 1.19;
-    setSelectedVenta(prevState => ({
-      ...prevState,
-      total,
-      subtotal
-    }));
-  };
-
-  const handleSearchChange = (e) => {
-    setSearch(e.target.value);
-  };
-
   const handleViewDetails = (venta) => {
     const detallesFormateados = venta.detalles.map(detalle => ({
       ...detalle,
@@ -294,7 +145,7 @@ export function Ventas() {
       subtotal: parseFloat(venta.total) / 1.19,
       total: parseFloat(venta.total)
     });
-    handleDetailsOpen();
+    setDetailsOpen(true);
   };
 
   const handleUpdateState = async (id_venta) => {
@@ -326,33 +177,61 @@ export function Ventas() {
     }
   };
 
-  const handlePedidoChange = async (numero_pedido) => {
-    const pedido = pedidos.find(p => p.numero_pedido === numero_pedido);
-    if (pedido) {
-      const detalles = pedido.detallesPedido.map(detalle => ({
-        id_producto: detalle.id_producto,
-        cantidad: detalle.cantidad,
-        precio_unitario: parseFloat(productos.find(p => p.id_producto === detalle.id_producto)?.precio || 0),
-      }));
-      setSelectedVenta({
-        ...selectedVenta,
-        id_cliente: pedido.id_cliente,
-        numero_venta: pedido.numero_pedido,
-        fecha_venta: pedido.fecha_pago ? pedido.fecha_pago.split('T')[0] : "",
-        fecha_entrega: pedido.fecha_entrega ? pedido.fecha_entrega.split('T')[0] : "", // Autocompletar fecha de entrega
-        detalleVentas: detalles,
-      });
-      updateTotal(detalles);
+  const handleToggleActivo = async (id_venta, activo) => {
+    const venta = ventas.find(v => v.id_venta === id_venta);
+    if (!venta) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Venta no encontrada.',
+        });
+        return;
     }
+
+    // Verificar si la venta ya está anulada o desactivada
+    if (venta.anulacion || !venta.activo) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Operación no permitida.',
+            text: 'Una venta anulada o desactivada no se puede volver a activar.',
+        });
+        return;
+    }
+
+    if (!activo) {
+        // Si la venta está siendo anulada (activo === false), se solicita el motivo de anulación
+        setVentaToCancel(id_venta);
+        setCancelOpen(true);
+    } 
+    // Eliminamos la opción de volver a activar
   };
 
-  const handleToggleActivo = async (id_venta, activo) => {
+  const handleCancelVenta = async () => {
+    if (!motivoAnulacion.trim()) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Debe proporcionar un motivo de anulación.',
+      });
+      return;
+    }
+
     try {
-      await axios.patch(`http://localhost:3000/api/ventas/${id_venta}/estado`, { activo });
+      await axios.patch(`http://localhost:3000/api/ventas/${ventaToCancel}/estado`, { 
+        activo: false, 
+        anulacion: motivoAnulacion 
+      });
       fetchVentas();
+      Swal.fire({
+        icon: 'success',
+        title: 'La venta ha sido anulada correctamente.',
+      });
+      setCancelOpen(false);
+      setMotivoAnulacion('');
     } catch (error) {
-      console.error("Error updating activo state:", error);
-      Swal.fire("Error", "Hubo un problema al actualizar el estado activo de la venta.", "error");
+      console.error("Error al anular la venta:", error.response?.data || error.message);
+      Swal.fire({
+        icon: 'error',
+        title: `Hubo un problema al anular la venta: ${error.response?.data?.error || error.message}`,
+      });
     }
   };
 
@@ -403,9 +282,7 @@ export function Ventas() {
 
     doc.text(`Subtotal: $${subtotal.toFixed(2)}`, 140, doc.lastAutoTable.finalY + 20);
     doc.text(`IVA (19%): $${iva.toFixed(2)}`, 140, doc.lastAutoTable.finalY + 30);
-    doc.setFontSize(14);
-    doc.text(`Total: $${parseFloat(venta.total).toFixed(2)}`, 140, doc.lastAutoTable.finalY + 40);
-
+    doc.setFontSize(14); doc.text(`Total: $${parseFloat(venta.total).toFixed(2)}`, 140, doc.lastAutoTable.finalY + 40);
     // Información adicional
     doc.setFontSize(10);
     doc.text(`Fecha de Creación: ${new Date(venta.createdAt).toLocaleString()}`, 20, doc.internal.pageSize.height - 20);
@@ -414,375 +291,207 @@ export function Ventas() {
     doc.save(`Comprobante_Venta_${venta.numero_venta}.pdf`);
   };
 
-  const indexOfLastVenta = currentPage * ventasPerPage;
-  const indexOfFirstVenta = indexOfLastVenta - ventasPerPage;
+  const indexOfLastVenta = currentPage * ventasPerPage; 
+  const indexOfFirstVenta = indexOfLastVenta - ventasPerPage; 
   const currentVentas = filteredVentas.slice(indexOfFirstVenta, indexOfLastVenta);
 
-  const pageNumbers = [];
-  for (let i = 1; i <= Math.ceil(filteredVentas.length / ventasPerPage); i++) {
-    pageNumbers.push(i);
+  const pageNumbers = []; 
+  for (let i = 1; i <= Math.ceil(filteredVentas.length / ventasPerPage); i++) { 
+    pageNumbers.push(i); 
   }
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  return (
+  return ( 
     <>
-      <div className="relative mt-2 h-32 w-full overflow-hidden rounded-xl bg-[url('/img/background-image.png')] bg-cover bg-center">
-        <div className="absolute inset-0 h-full w-full bg-gray-900/75" />
-      </div>
-
-
-      <Card className="mx-3 -mt-16 mb-6 lg:mx-4 border border-blue-gray-100">
-        <CardBody className="p-4">
-          <div className="flex items-center justify-between mb-6">
-          <Button onClick={handleCreate} className="btnagregar" size="sm" startIcon={<PlusIcon />}>
-            Crear Venta
+      <div className="relative mt-2 h-32 w-full overflow-hidden rounded-xl bg-[url('/img/background-image.png')] bg-cover bg-center"> 
+        <div className="absolute inset-0 h-full w-full bg-gray-900/75" /> 
+      </div> 
+      <Card className="mx-3 -mt-16 mb-6 lg:mx-4 border border-blue-gray-100"> 
+        <CardBody className="p-4"> 
+          <Button onClick={() => setShowCrearVenta(!showCrearVenta)} className="btnagregar" size="sm" startIcon={<PlusIcon />}> 
+            {showCrearVenta ? "Ocultar Crear Venta" : "Crear Venta"} 
+          </Button> 
+          <Button onClick={() => setProductionOpen(!productionOpen)} className="btnagregar" size="sm" startIcon={<PlusIcon />} style={{ marginLeft: '10px' }}> 
+            Producción 
           </Button>
-         
-          
-          <input
-  type="text"
-  placeholder="Buscar por nombre de Proveedor..."
-  value={search}
-  onChange={handleSearchChange}
-  className="ml-[2rem] border border-gray-300 rounded-md focus:border-blue-500 appearance-none shadow-none py-2 px-4 text-sm" // Ajusta el padding vertical y horizontal
-  style={{ width: '265px' }} // Ajusta el ancho del campo de búsqueda
-/>
-</div>
-
-
-<div className="mb-6">
-            <div className="mt-4 flex gap-4">
-              <Input
-                type="date"
-                label="Fecha Inicio"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-              <Input
-                type="date"
-                label="Fecha Fin"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+          {/* Mostrar formulario de crear venta o lista de ventas según el estado */}
+          {showCrearVenta ? (
+            <div className="mt-6">
+              <CrearVenta
+                clientes={clientes}
+                productos={productos}
+                pedidos={pedidos}
+                fetchVentas={fetchVentas}
+                onCancel={() => setShowCrearVenta(false)} // Cerrar el formulario
               />
             </div>
-          </div>
+          ) : (
+            <>
+              <div className="mb-6 mt-6">
+                <Input
+                  type="text"
+                  placeholder="Buscar por cliente"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+                <div className="mt-4 flex gap-4">
+                  <Input
+                    type="date"
+                    label="Fecha Inicio"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                  <Input
+                    type="date"
+                    label="Fecha Fin"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+              </div>
 
-          <div className="mb-1">
-            <Typography variant="h6" color="blue-gray" className="mb-4">
-              Lista de Ventas
-            </Typography>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      CLIENTE
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      FECHA DE VENTA
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      ESTADO
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      ACTIVO
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      ACCIONES
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {currentVentas.map((venta) => (
-                    <tr key={venta.id_venta}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {venta.cliente.nombre}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {venta.fecha_venta.split('T')[0]}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {venta.estado}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <button
-                          onClick={() => handleToggleActivo(venta.id_venta, !venta.activo)}
-                          className={`relative inline-flex items-center h-6 w-12 rounded-full p-1 duration-300 ease-in-out ${
-                            venta.activo
-                              ? 'bg-gradient-to-r from-green-800 to-green-600 hover:from-green-600 hover:to-green-400 shadow-lg'
-                              : 'bg-gradient-to-r from-red-800 to-red-500 hover:from-red-600 hover:to-red-400 shadow-lg'
-                          }`}
-                        >
-                          <span
-                            className={`inline-block w-5 h-5 transform bg-white rounded-full shadow-md transition-transform duration-300 ease-in-out ${
-                              venta.activo ? 'translate-x-5' : 'translate-x-1'
-                            }`}
-                          />
-                        </button>
-                      </td>
+              <div className="mb-1">
+                <Typography variant="h6" color="blue-gray" className="mb-4">
+                  Lista de Ventas
+                </Typography>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          CLIENTE
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          FECHA DE VENTA
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          ESTADO
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          ACTIVO
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          ACCIONES
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {currentVentas.map((venta) => (
+                        <tr key={venta.id_venta}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {venta.cliente.nombre}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {venta.fecha_venta.split('T')[0]}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {venta.estado}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <button
+                              onClick={() => handleToggleActivo(venta.id_venta, !venta.activo)}
+                              className={`relative inline-flex items-center h-6 w-12 rounded-full p-1 duration-300 ease-in-out ${
+                                venta.activo
+                                  ? 'bg-gradient-to-r from-green-800 to-green-600 hover:from-green-600 hover:to-green-400 shadow-lg'
+                                  : 'bg-gradient-to-r from-red-800 to-red-500 hover:from-red-600 hover:to-red-400 shadow-lg'
+                              }`}
+                              disabled={!venta.activo} // Desactivar el botón si la venta está desactivada
+                            >
+                              <span
+                                className={`inline-block w-5 h-5 transform bg-white rounded-full shadow-md transition-transform duration-300 ease-in-out ${
+                                  venta.activo ? 'translate-x-5' : 'translate-x-1'
+                                }`}
+                              />
+                            </button>
+                          </td>
 
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-2">
-                        <IconButton className="btnvisualizar" size="sm" onClick={() => handleViewDetails(venta)}>
-                          <EyeIcon className="h-5 w-5" />
-                        </IconButton>
-                        <IconButton className="btnedit" size="sm" onClick={() => handleUpdateState(venta.id_venta)}>
-                          <PencilIcon className="h-5 w-5" />
-                        </IconButton>
-                        <IconButton className="btnpdf" size="sm" onClick={() => generatePDF(venta)}>
-                          <ArrowDownIcon className="h-5 w-5" />
-                        </IconButton>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="mt-4">
-              <ul className="flex justify-center items-center space-x-2">
-                {pageNumbers.map((number) => (
-                  <Button
-                    key={number}
-                    onClick={() => paginate(number)}
-                    className={`pagination ${number === currentPage ? 'active' : ''}`}
-                    size="sm"
-                  >
-                    {number}
-                  </Button>
-                ))}
-              </ul>
-            </div>
-          </div>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-2">
+                            <IconButton 
+                              className="btnvisualizar" 
+                              size="sm" 
+                              onClick={() => handleViewDetails(venta)} 
+                              disabled={!venta.activo} // Desactivar botón si la venta está desactivada
+                            >
+                              <EyeIcon className="h-5 w-5" />
+                            </IconButton>
+                            <IconButton 
+                              className="btnedit" 
+                              size="sm" 
+                              onClick={() => handleUpdateState(venta.id_venta)} 
+                              disabled={!venta.activo} // Desactivar botón si la venta está desactivada
+                            >
+                              <PencilIcon className="h-5 w-5" />
+                            </IconButton>
+                            <IconButton 
+                              className="btnpdf" 
+                              size="sm" 
+                              onClick={() => generatePDF(venta)} 
+                              disabled={!venta.activo} // Desactivar botón si la venta está desactivada
+                            >
+                              <ArrowDownIcon className="h-5 w-5" />
+                            </IconButton>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="mt-4">
+                  <ul className="flex justify-center items-center space-x-2">
+                    {pageNumbers.map((number) => (
+                      <Button
+                        key={number}
+                        onClick={() => paginate(number)}
+                        className={`pagination ${number === currentPage ? 'active' : ''}`}
+                        size="sm"
+                      >
+                        {number}
+                      </Button>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </>
+          )}
         </CardBody>
       </Card>
 
-      <Dialog open={open} handler={handleOpen} className="custom-modal max-w-4xl">
-        <DialogHeader className="text-black p-2 text-lg">Crear Venta</DialogHeader>
-        <DialogBody divider className="flex max-h-[60vh] p-4 gap-6">
-          <div className="flex-1 flex flex-col gap-4 overflow-y-auto">
-            <div className="w-full max-w-xs">
-              <Select
-                label="Número de Pedido"
-                name="numero_venta"
-                value={selectedVenta.numero_venta}
-                onChange={(e) => {
-                  handlePedidoChange(e);
-                  setErrors({ ...errors, numero_venta: "" });
-                }}
-                className="w-full text-sm"
-              >
-                {pedidos.map((pedido) => (
-                  <Option key={pedido.numero_pedido} value={pedido.numero_pedido}>
-                    {pedido.numero_pedido}
-                  </Option>
-                ))}
-              </Select>
-              {errors.numero_venta && (
-                <p className="text-red-500 text-xs mt-1">{errors.numero_venta}</p>
-              )}
-            </div>
-            <div className="w-full max-w-xs">
-              <Select
-                label="Cliente"
-                name="id_cliente"
-                required
-                value={selectedVenta.id_cliente}
-                onChange={(e) => {
-                  setSelectedVenta({ ...selectedVenta, id_cliente: e });
-                  setErrors({ ...errors, id_cliente: "" });
-                }}
-                className="w-full text-sm"
-              >
-                {clientes.map((cliente) => (
-                  <Option key={cliente.id_cliente} value={cliente.id_cliente}>
-                    {cliente.nombre}
-                  </Option>
-                ))}
-              </Select>
-              {errors.id_cliente && (
-                <p className="text-red-500 text-xs mt-1">{errors.id_cliente}</p>
-              )}
-            </div>
-            <div className="w-full max-w-xs">
-              <Input
-                label="Fecha de Venta"
-                name="fecha_venta"
-                type="date"
-                required
-                value={selectedVenta.fecha_venta}
-                onChange={(e) => {
-                  handleChange(e);
-                  setErrors({ ...errors, fecha_venta: "" });
-                }}
-                className="w-full text-sm"
-              />
-              {errors.fecha_venta && (
-                <p className="text-red-500 text-xs mt-1">{errors.fecha_venta}</p>
-              )}
-            </div>
-            <div className="w-full max-w-xs">
-              <Input
-                label="Fecha de Entrega"
-                name="fecha_entrega"
-                type="date"
-                required
-                value={selectedVenta.fecha_entrega}
-                onChange={(e) => {
-                  handleChange(e);
-                  setErrors({ ...errors, fecha_entrega: "" });
-                }}
-                className="w-full text-sm"
-              />
-              {errors.fecha_entrega && (
-                <p className="text-red-500 text-xs mt-1">{errors.fecha_entrega}</p>
-              )}
-            </div>
-            <div className="w-full max-w-xs">
-              <Select
-                label="Estado"
-                name="estado"
-                required
-                value={selectedVenta.estado}
-                onChange={(e) => {
-                  setSelectedVenta({ ...selectedVenta, estado: e });
-                  setErrors({ ...errors, estado: "" });
-                }}
-                className="w-full text-sm"
-              >
-                <Option value="Pendiente de Preparacion">Pendiente de Preparacion</Option>
-              </Select>
-              {errors.estado && (
-                <p className="text-red-500 text-xs mt-1">{errors.estado}</p>
-              )}
-            </div>
-            <Typography variant="h6" color="blue-gray" className="mt-4 text-sm">
-              Detalles de la Venta
+      {/* Modal para capturar motivo de anulación */}
+      {cancelOpen && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm">
+            <Typography variant="h6" className="font-semibold mb-4">
+              Motivo de Anulación
             </Typography>
-            <div className="bg-gray-100 p-4 rounded-xs shadow-md flex-1 mt-2 mb-4">
-              {selectedVenta.detalleVentas.map((detalle, index) => (
-                <div key={index} className="mb-4 flex items-center">
-                  <div className="flex-1 flex flex-col gap-4">
-                    <div className="w-full max-w-xs">
-                      <Select
-                        label="Producto"
-                        name="id_producto"
-                        required
-                        value={detalle.id_producto}
-                        onChange={(e) => {
-                          handleDetalleChange(index, { target: { name: 'id_producto', value: e } });
-                          setErrors({ ...errors, [`producto_${index}`]: "" });
-                        }}
-                        className="w-full text-sm"
-                      >
-                        {productos.map((producto) => (
-                          <Option key={producto.id_producto} value={producto.id_producto}>
-                            {producto.nombre}
-                          </Option>
-                        ))}
-                      </Select>
-                      {errors[`producto_${index}`] && (
-                        <p className="text-red-500 text-xs mt-1">{errors[`producto_${index}`]}</p>
-                      )}
-                    </div>
-                    <div className="w-full max-w-xs">
-                      <Input
-                        label="Cantidad"
-                        name="cantidad"
-                        type="number"
-                        required
-                        value={detalle.cantidad}
-                        onChange={(e) => {
-                          handleDetalleChange(index, e);
-                          setErrors({ ...errors, [`cantidad_${index}`]: "" });
-                        }}
-                        className="w-full text-sm"
-                      />
-                      {errors[`cantidad_${index}`] && (
-                        <p className="text-red-500 text-xs mt-1">{errors[`cantidad_${index}`]}</p>
-                      )}
-                    </div>
-                    <div className="w-full max-w-xs">
-                      <Input
-                        label="Precio Unitario"
-                        name="precio_unitario"
-                        type="number"
-                        step="0.01"
-                        required
-                        value={detalle.precio_unitario}
-                        onChange={(e) => {
-                          handleDetalleChange(index, e);
-                          setErrors({ ...errors, [`precio_${index}`]: "" });
-                        }}
-                        className="w-full text-sm"
-                      />
-                      {errors[`precio_${index}`] && (
-                        <p className="text-red-500 text-xs mt-1">{errors[`precio_${index}`]}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center ml-2">
-                    <IconButton
-                      color="red"
-                      onClick={() => handleRemoveDetalle(index)}
-                      className="btncancelarm"
-                      size="sm"
-                    >
-                      <TrashIcon className="h-5 w-5" />
-                    </IconButton>
-                  </div>
-                </div>
-              ))}
-              <div className="mt-2 flex justify-end">
-                <Button className="btnmas" size="sm" onClick={handleAddDetalle}>
-                  <PlusIcon className="h-4 w-4 mr-1" />
-                </Button>
-              </div>
+            <Input
+              label="Motivo de Anulación"
+              value={motivoAnulacion}
+              onChange={(e) => setMotivoAnulacion(e.target.value)}
+              className="w-full mb-4"
+              required
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="text" className="btncancelarm" size="sm" onClick={() => setCancelOpen(false)}>
+                Cancelar
+              </Button>
+              <Button variant="gradient" className="btnagregarm" size="sm" onClick={handleCancelVenta}>
+                Anular Venta
+              </Button>
             </div>
           </div>
-
-          <div className="w-full max-w-xs bg-gray-100 p-4 rounded-lg shadow-md max-h-[60vh]">
-            <Typography variant="h6" color="blue-gray" className="mb-4 text-lg">
-              Detalles de la Venta
-            </Typography>
-            <ul className="list-disc pl-4 text-sm">
-              {selectedVenta.detalleVentas.map((detalle, index) => (
-                <li key={index} className="mb-2">
-                  <span className="font-semibold text-gray-800">
-                    {productos.find(producto => producto.id_producto === detalle.id_producto)?.nombre || 'Desconocido'}:
-                  </span>
-                  Cantidad {detalle.cantidad}, Precio Unitario ${parseFloat(detalle.precio_unitario).toFixed(2)}
-                </li>
-              ))}
-            </ul>
-            <div className="mt-4">
-              <Typography variant="h6" color="blue-gray">
-                SubTotal: ${(selectedVenta.total / 1.19).toFixed(2)}
-              </Typography>
-              <Typography variant="h6" color="blue-gray">
-                Total: ${selectedVenta.total.toFixed(2)}
-              </Typography>
-            </div>
-          </div>
-        </DialogBody>
-        <DialogFooter className="bg-white p-4 flex justify-end gap-2">
-          <Button variant="text" className="btncancelarm" size="sm" onClick={handleOpen}>
-            Cancelar
-          </Button>
-          <Button variant="gradient" className="btnagregarm" size="sm" onClick={handleSave}>
-            Crear Venta
-          </Button>
-        </DialogFooter>
-      </Dialog>
+        </div>
+      )}
 
       <Producir
         open={productionOpen} 
-        handleProductionOpen={handleProductionOpen} 
+        handleProductionOpen={() => setProductionOpen(false)} 
         productosActivos={productos} 
         fetchProductos={fetchProductos} 
         fetchProductosActivos={fetchProductos} 
       />
 
-      <Dialog open={detailsOpen} handler={handleDetailsOpen} className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+      <Dialog open={detailsOpen} handler={() => setDetailsOpen(false)} className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-lg">
         <DialogHeader className="text-lg font-semibold text-gray-800 border-b border-gray-300">
           Detalles de la Venta
         </DialogHeader>
@@ -865,26 +574,26 @@ export function Ventas() {
                 </tr>
               </thead>
               <tbody>
-                  {selectedVenta.detalleVentas.map((detalle) => (
-                    <tr key={detalle.id_detalle_venta} className="border-b">
-                      <td className="py-2 px-4">{detalle.id_detalle_venta}</td>
-                      <td className="py-2 px-4">{productos.find(p => p.id_producto === detalle.id_producto)?.nombre || 'Producto no encontrado'}</td>
-                      <td className="py-2 px-4">{detalle.cantidad}</td>
-                      <td className="py-2 px-4">${parseFloat(detalle.precio_unitario).toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
+                {selectedVenta.detalleVentas.map((detalle) => (
+                  <tr key={detalle.id_detalle_venta} className="border-b">
+                    <td className="py-2 px-4">{detalle.id_detalle_venta}</td>
+                    <td className="py-2 px-4">{productos.find(p => p.id_producto === detalle.id_producto)?.nombre || 'Producto no encontrado'}</td>
+                    <td className="py-2 px-4">{detalle.cantidad}</td>
+                    <td className="py-2 px-4">${parseFloat(detalle.precio_unitario).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
           </div>
         </DialogBody>
         <DialogFooter className="p-4 border-t border-gray-300 flex justify-end">
-          <Button variant="gradient" className="btncancelarm" size="sm" onClick={handleDetailsOpen}>
+          <Button variant="gradient" className="btncancelarm" size="sm" onClick={() => setDetailsOpen(false)}>
             Cerrar
           </Button>
         </DialogFooter>
       </Dialog>
     </>
-  );
+  ); 
 }
 
 export default Ventas;
