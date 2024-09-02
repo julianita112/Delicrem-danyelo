@@ -30,7 +30,7 @@ export function Insumos() {
     id_categoria: "",
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const [insumosPerPage] = useState(6);
+  const [insumosPerPage] = useState(8);
   const [search, setSearch] = useState("");
   const [errors, setErrors] = useState({});
   const [categorias, setCategorias] = useState([]);
@@ -519,8 +519,8 @@ export function Insumos() {
               error={errors.unidad_medida}
               className="rounded-lg border-gray-300"
             >
-              <Option value="G">Gramos</Option>
-              <Option value="mL">Mililitros</Option>
+              <Option value="Gramos">Gramos</Option>
+              <Option value="Mililitros">Mililitros</Option>
               <Option value="Unidad">Unidad</Option>
             </Select>
             {errors.unidad_medida && <Typography className="text-red-500 mt-1 text-sm">{errors.unidad_medida}</Typography>}

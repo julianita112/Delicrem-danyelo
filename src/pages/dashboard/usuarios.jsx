@@ -252,7 +252,7 @@ export function Usuarios() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {roles.find((role) => role.id_rol === user.id_rol)?.nombre || "Rol no encontrado"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">{user.tipo_documento}</td>
+                      <td className="px-10 py-4 whitespace-nowrap text-sm">{user.tipo_documento}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">{user.numero_documento}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">{user.genero}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">{user.telefono}</td>

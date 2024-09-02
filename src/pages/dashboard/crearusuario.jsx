@@ -210,7 +210,7 @@ const CrearUsuario = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div className="col-span-1">
             <Input
-              label="Nombre"
+              label="Nombres y Apellidos"
               name="nombre"
               value={selectedUser.nombre}
               onChange={handleChange}

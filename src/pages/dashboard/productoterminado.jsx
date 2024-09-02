@@ -427,45 +427,49 @@ export function ProductoTerminado() {
         fetchProductos={fetchProductos}
         fetchProductosActivos={fetchProductosActivos}
       />
+<Dialog open={detailsOpen} handler={handleDetailsOpen} className="overflow-auto max-h-[90vh] rounded-lg shadow-lg border border-gray-200">
+  <DialogHeader className="font-bold text-gray-900 border-b border-gray-200 p-4">
+    <Typography variant="h4" className="font-semibold">
+      Detalles del Producto
+    </Typography>
+  </DialogHeader>
+  <DialogBody divider className="overflow-auto max-h-[50vh] p-4 bg-white">
+    <table className="min-w-full border-separate border-spacing-4">
+      <tbody>
+        <tr className="border-b border-gray-300">
+          <td className="font-medium text-gray-700">Nombre:</td>
+          <td className="text-gray-900">{selectedProducto.nombre}</td>
+        </tr>
+        <tr className="border-b border-gray-300">
+          <td className="font-medium text-gray-700">Descripción:</td>
+          <td className="text-gray-900">{selectedProducto.descripcion}</td>
+        </tr>
+        <tr className="border-b border-gray-300">
+          <td className="font-medium text-gray-700">Precio:</td>
+          <td className="text-gray-900">{selectedProducto.precio}</td>
+        </tr>
+        <tr className="border-b border-gray-300">
+          <td className="font-medium text-gray-700">Stock:</td>
+          <td className="text-gray-900">{selectedProducto.stock}</td>
+        </tr>
+        <tr className="border-b border-gray-300">
+          <td className="font-medium text-gray-700">Creado:</td>
+          <td className="text-gray-900">{selectedProducto.createdAt ? new Date(selectedProducto.createdAt).toLocaleString() : "N/A"}</td>
+        </tr>
+        <tr>
+          <td className="font-medium text-gray-700">Actualizado:</td>
+          <td className="text-gray-900">{new Date(selectedProducto.updatedAt).toLocaleString()}</td>
+        </tr>
+      </tbody>
+    </table>
+  </DialogBody>
+  <DialogFooter className="bg-white p-4 flex justify-end border-t border-gray-200">
+    <Button variant="gradient" className="btncancelarm" size="sm" onClick={handleDetailsOpen}>
+      Cerrar
+    </Button>
+  </DialogFooter>
+</Dialog>
 
-      <Dialog open={detailsOpen} handler={handleDetailsOpen}>
-        <DialogHeader>Detalles del Producto</DialogHeader>
-        <DialogBody divider>
-          <table className="min-w-full">
-            <tbody>
-              <tr>
-                <td className="font-semibold">Nombre:</td>
-                <td>{selectedProducto.nombre}</td>
-              </tr>
-              <tr>
-                <td className="font-semibold">Descripción:</td>
-                <td>{selectedProducto.descripcion}</td>
-              </tr>
-              <tr>
-                <td className="font-semibold">Precio:</td>
-                <td>{selectedProducto.precio}</td>
-              </tr>
-              <tr>
-                <td className="font-semibold">Stock:</td>
-                <td>{selectedProducto.stock}</td>
-              </tr>
-              <tr>
-                <td className="font-semibold">Creado:</td>
-                <td>{selectedProducto.createdAt ? new Date(selectedProducto.createdAt).toLocaleString() : "N/A"}</td>
-              </tr>
-              <tr>
-                <td className="font-semibold">Actualizado:</td>
-                <td>{new Date(selectedProducto.updatedAt).toLocaleString()}</td>
-              </tr>
-            </tbody>
-          </table>
-        </DialogBody>
-        <DialogFooter>
-          <Button variant="gradient" color="blue-gray" onClick={handleDetailsOpen}>
-            Cerrar
-          </Button>
-        </DialogFooter>
-      </Dialog>
     </>
   );
 }

@@ -244,13 +244,13 @@ import {
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
-                        <th className="py-2 px-4 bg-gray-200">Número de Recibo</th>
-                          <th className="py-2 px-4 bg-gray-200">Proveedor</th>
-                          <th className="py-2 px-4 bg-gray-200">Fecha de Compra</th>
-                          <th className="py-2 px-4 bg-gray-200">Fecha de Registro</th>
-                          <th className="py-2 px-4 bg-gray-200">Estado</th>
-                          <th className="py-2 px-4 bg-gray-200">Total</th>
-                          <th className="py-2 px-4 bg-gray-200">Acciones</th>
+                        <th className="py-2 px-4text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número de Recibo</th>
+                          <th className="py-2 px-4text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proveedor</th>
+                          <th className="py-2 px-4text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha de Compra</th>
+                          <th className="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha de Registro</th>
+                          <th className="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                          <th className="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                          <th className="py-2 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -322,41 +322,39 @@ import {
         </Card>
   
         {/* Modal para ver detalles de la compra */}
-<Dialog open={showDetails} handler={handleCloseDetails} className="overflow-auto max-h-[90vh] rounded-lg shadow-lg border border-gray-200">
-  <DialogHeader className="font-bold text-gray-900">
-    <Typography variant="h4" className="font-semibold">
-      Detalles de la Compra
-    </Typography>
+        <Dialog open={showDetails} handler={handleCloseDetails} className="overflow-auto max-h-[90vh] rounded-lg shadow-lg border border-gray-200">
+  <DialogHeader className="text-black p-4 border-b border-gray-200">
+    <Typography variant="h4" className="font-semibold">Detalles de la Compra</Typography>
   </DialogHeader>
   <DialogBody divider className="overflow-auto max-h-[60vh] p-4 bg-white">
     {/* Mostrar el número de recibo primero */}
     <div className="mb-4">
-      <Typography variant="h5" color="blue-gray" className="font-semibold">
+      <Typography variant="h5" color="blue-gray" className="font-semibold mb-2">
         Número de Recibo:
-        <div> 
-         {selectedCompra.numero_recibo || "N/A"}
+        <div className="text-gray-900 mt-1">
+          {selectedCompra.numero_recibo || "N/A"}
         </div>
       </Typography>
     </div>
     {/* Información del Proveedor */}
     {selectedCompra.proveedorCompra && (
       <div className="mb-4">
-        <Typography variant="h5" color="blue-gray" className="mb-1">
+        <Typography variant="h5" color="blue-gray" className="font-semibold mb-2">
           Información del Proveedor
         </Typography>
-        <table className="min-w-full border-separate border-spacing-1 border-gray-300">
+        <table className="min-w-full border-separate border-spacing-4 border-gray-300">
           <tbody>
             <tr className="border-b border-gray-300">
-              <td className="font-semibold px-4 py-2">ID Proveedor:</td>
-              <td className="px-4 py-2">{selectedCompra.proveedorCompra.id_proveedor}</td>
+              <td className="font-medium text-gray-700 px-4 py-2">ID Proveedor:</td>
+              <td className="text-gray-900 px-4 py-2">{selectedCompra.proveedorCompra.id_proveedor}</td>
             </tr>
             <tr className="border-b border-gray-300">
-              <td className="font-semibold px-4 py-2">Nombre:</td>
-              <td className="px-4 py-2">{selectedCompra.proveedorCompra.nombre}</td>
+              <td className="font-medium text-gray-700 px-4 py-2">Nombre:</td>
+              <td className="text-gray-900 px-4 py-2">{selectedCompra.proveedorCompra.nombre}</td>
             </tr>
             <tr className="border-b border-gray-300">
-              <td className="font-semibold px-4 py-2">Contacto:</td>
-              <td className="px-4 py-2">{selectedCompra.proveedorCompra.contacto}</td>
+              <td className="font-medium text-gray-700 px-4 py-2">Contacto:</td>
+              <td className="text-gray-900 px-4 py-2">{selectedCompra.proveedorCompra.contacto}</td>
             </tr>
           </tbody>
         </table>
@@ -364,27 +362,25 @@ import {
     )}
     {/* Detalles de la Compra */}
     <div className="mt-6">
-      <Typography variant="h5" color="blue-gray" className="mb-3">
+      <Typography variant="h5" color="blue-gray" className="font-semibold mb-2">
         Detalles de la Compra
       </Typography>
-      <table className="min-w-full border-separate border-spacing-2 border-gray-300">
+      <table className="min-w-full border-separate border-spacing-4 border-gray-300">
         <thead className="bg-gray-200">
           <tr>
-            <th className="px-4 py-2 text-left font-semibold text-gray-700">ID de Compra</th>
-            <th className="px-4 py-2 text-left font-semibold text-gray-700">Nombre Insumo</th>
-            <th className="px-4 py-2 text-left font-semibold text-gray-700">Cantidad</th>
-            <th className="px-4 py-2 text-left font-semibold text-gray-700">Precio Unitario</th>
+            <th className="px-6 py-2 text-left font-semibold text-gray-700">ID de Compra</th>
+            <th className="px-6 py-2 text-left font-semibold text-gray-700">Nombre Insumo</th>
+            <th className="px-6 py-2 text-left font-semibold text-gray-700">Cantidad</th>
+            <th className="px-6 py-2 text-left font-semibold text-gray-700">Precio Unitario</th>
           </tr>
         </thead>
         <tbody>
           {(selectedCompra.detalleCompras || []).map((detalle) => (
-            <tr key={detalle.id_detalle_compra} className="border-b border-gray-300 hover:bg-gray-50">
-              <td className="px-4 py-2">{detalle.id_detalle_compra}</td>
-              <td className="px-4 py-2">{insumos.find(ins => ins.id_insumo === detalle.id_insumo)?.nombre || "Desconocido"}</td>
-              <td className="px-4 py-2">{detalle.cantidad}</td>
-              <td className="px-4 py-2">
-                {Number(detalle.precio_unitario).toFixed(2)}
-              </td>
+            <tr key={detalle.id_detalle_compra} className="border-t border-gray-300 hover:bg-gray-50">
+              <td className="px-6 py-2 text-gray-900">{detalle.id_detalle_compra}</td>
+              <td className="px-6 py-2 text-gray-900">{insumos.find(ins => ins.id_insumo === detalle.id_insumo)?.nombre || "Desconocido"}</td>
+              <td className="px-6 py-2 text-gray-900">{detalle.cantidad}</td>
+              <td className="px-6 py-2 text-gray-900">{Number(detalle.precio_unitario).toFixed(2)}</td>
             </tr>
           ))}
         </tbody>
@@ -396,39 +392,52 @@ import {
       </div>
     </div>
   </DialogBody>
-  <DialogFooter className="bg-gray-100 p-4 flex justify-end rounded-b-lg border-t border-gray-300">
-    <Button variant="gradient" className="btncancelarm" size="sm" onClick={handleCloseDetails}>
+  <DialogFooter className="bg-gray-100 p-4 flex justify-end border-t border-gray-200 rounded-b-lg">
+    <Button variant="gradient" className="btncancelarm" size="sm" color="blue-gray" onClick={handleCloseDetails}>
       Cerrar
     </Button>
   </DialogFooter>
 </Dialog>
 
+
   
         {/* Modal para capturar motivo de anulación */}
         {cancelOpen && (
-          <div className="fixed inset-0 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm">
-              <Typography variant="h6" className="font-semibold mb-4">
-                Motivo de Anulación
-              </Typography>
-              <Input
-                label="Motivo de Anulación"
-                value={motivoAnulacion}
-                onChange={(e) => setMotivoAnulacion(e.target.value)}
-                className="w-full mb-4"
-                required
-              />
-              <div className="flex justify-end gap-2">
-                <Button variant="text" className="btncancelarm" size="sm" onClick={() => setCancelOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button variant="gradient" className="btnagregarm" size="sm" onClick={handleCancelCompra}>
-                  Anular Compra
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+  <div className="fixed inset-0 flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+      <Typography variant="h6" className="font-semibold mb-4">
+        Motivo de Anulación
+      </Typography>
+      <textarea
+        placeholder="Escribe el motivo de anulación aquí..."
+        value={motivoAnulacion}
+        onChange={(e) => setMotivoAnulacion(e.target.value)}
+        className="w-full p-3 border border-gray-300 rounded-lg mb-4 resize-none"
+        rows={4}
+        required
+      />
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="text"
+          className="btncancelarm"
+          size="sm"
+          onClick={() => setCancelOpen(false)}
+        >
+          Cancelar
+        </Button>
+        <Button
+          variant="gradient"
+          className="btnagregarm"
+          size="sm"
+          onClick={handleCancelCompra}
+        >
+          Anular Compra
+        </Button>
+      </div>
+    </div>
+  </div>
+)}
+
       </>
     );
   }

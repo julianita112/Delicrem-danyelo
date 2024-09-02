@@ -13,6 +13,7 @@ import {
 import { PlusIcon, PencilIcon, TrashIcon, EyeIcon } from "@heroicons/react/24/solid";
 import { useState, useEffect } from "react";
 import axios from "../../utils/axiosConfig";
+import { Textarea } from "@material-tailwind/react"; 
 import Swal from 'sweetalert2';
 
 export function CategoriaInsumos() {
@@ -369,10 +370,10 @@ export function CategoriaInsumos() {
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Nombre
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-20 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Descripción
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-10 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Estado
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -384,8 +385,8 @@ export function CategoriaInsumos() {
                   {currentCategorias.map((categoria) => (
                     <tr key={categoria.id_categoria}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{categoria.nombre}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{categoria.descripcion}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-10 py-4 whitespace-nowrap text-sm text-gray-500">{categoria.descripcion}</td>
+                      <td className="px-10 py-4 whitespace-nowrap text-sm text-gray-500">
     <label className="inline-flex relative items-center cursor-pointer">
         <input
             type="checkbox"
@@ -474,43 +475,50 @@ export function CategoriaInsumos() {
         </CardBody>
       </Card>
       
-      <Dialog open={open} handler={handleOpen} className="max-w-md w-10/12 p-5 bg-white rounded-2xl shadow-lg" size="xs">
-        <DialogHeader className="text-xl font-bold text-gray-800">
-          {editMode ? "Editar Categoría de Insumos" : "Crear Categoría de Insumos"}
-        </DialogHeader>
-        <DialogBody divider>
-          <div className="space-y-3">
-            <Input
-              label="Nombre de la categoría"
-              name="nombre"
-              value={selectedCategoria.nombre}
-              onChange={handleChange}
-              required
-              error={errors.nombre}
-              className="w-full"
-            />
-            {errors.nombre && <Typography color="red" className="text-xs">{errors.nombre}</Typography>}
-            <Input
-              label="Descripción"
-              name="descripcion"
-              value={selectedCategoria.descripcion}
-              onChange={handleChange}
-              required
-              error={errors.descripcion}
-              className="w-full"
-            />
-            {errors.descripcion && <Typography color="red" className="text-xs">{errors.descripcion}</Typography>}
-          </div>
-        </DialogBody>
-        <DialogFooter className="flex justify-end gap-2">
-          <Button variant="text" className="btncancelarinsumom" size="sm" color="red" onClick={handleOpen}>
-            Cancelar
-          </Button>
-          <Button variant="gradient" className="btnagregar" color="green" size="sm" onClick={handleSave}>
-            {editMode ? "Guardar Cambios" : "Crear Categoría"}
-          </Button>
-        </DialogFooter>
-      </Dialog>
+      <Dialog
+  open={open}
+  handler={handleOpen}
+  className="max-w-md w-10/12 p-6 bg-white rounded-3xl shadow-xl"
+  size="xs"
+>
+  <DialogHeader className="text-2xl font-semibold text-gray-800">
+    {editMode ? "Editar Categoría de Insumos" : "Crear Categoría de Insumos"}
+  </DialogHeader>
+  <DialogBody divider className="space-y-4">
+    <div className="space-y-3">
+      <Input
+        label="Nombre de la categoría"
+        name="nombre"
+        value={selectedCategoria.nombre}
+        onChange={handleChange}
+        required
+        error={errors.nombre}
+        className="w-full"
+      />
+      {errors.nombre && <Typography color="red" className="text-sm">{errors.nombre}</Typography>}
+      <Textarea
+        label="Breve descripción"
+        name="descripcion"
+        value={selectedCategoria.descripcion}
+        onChange={handleChange}
+        required
+        error={errors.descripcion}
+        className="w-full"
+        rows="4"
+      />
+      {errors.descripcion && <Typography color="red" className="text-sm">{errors.descripcion}</Typography>}
+    </div>
+  </DialogBody>
+  <DialogFooter className="flex justify-end gap-3">
+    <Button variant="text" className="btncancelarm" size="sm" onClick={handleOpen}> 
+      Cancelar
+    </Button>
+    <Button variant="gradient" className="btnagregarm" size="sm" onClick={handleSave}>
+      {editMode ? "Guardar Cambios" : "Crear Categoría"}
+    </Button>
+  </DialogFooter>
+</Dialog>
+
 
       <Dialog open={detailsOpen} handler={handleDetailsOpen} className="max-w-xs w-11/12" size="xs">
         <DialogHeader className="font-bold text-gray-900">
